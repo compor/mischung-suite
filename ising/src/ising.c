@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -13,6 +14,8 @@
 #define ny 10
 #define THETA 0.01
 #define LIMIT -1000000000
+
+#define MIN(a, b) (a > b) ? (b) : (a)
 
 long nodes_num = N;
 float theta = THETA;
@@ -123,7 +126,9 @@ int main(int argc, char *argv[]) {
   struct node *nodes = NULL;
   int i, j;
   int *energy = NULL;
-  int min_energy = 0;
+  int first_min_energy = INT_MAX;
+  int first_min_energy_found = 0;
+  int min_energy = INT_MAX;
 
   handle_args(argc, argv);
 
@@ -158,21 +163,27 @@ int main(int argc, char *argv[]) {
   }
 
   for (i = 0; i < nodes_num; i++) {
-    if (energy[i] < limit) {
-      min_energy = energy[i];
-      break;
+    if (!first_min_energy_found && energy[i] < limit) {
+      first_min_energy = energy[i];
+      first_min_energy_found = 1;
     }
+
+    min_energy = MIN(min_energy, energy[i]);
   }
 
   if (debug_mode) {
     print_nodes(nodes_num, nodes, energy);
+  }
+
+  if (first_min_energy_found) {
+    fprintf(stderr, "first min energy found: %d\n", first_min_energy);
   }
   fprintf(stderr, "min energy found: %d\n", min_energy);
 
   free(nodes);
   free(energy);
 
-  return min_energy;
+  return first_min_energy;
 }
 
 void print_nodes(long n, struct node *node, int *energy) {
