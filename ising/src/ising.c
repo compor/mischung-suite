@@ -40,6 +40,7 @@ int potential(struct node *node) {
           if ((kx != 0) || (ky != 0)) {
             /*fprintf(stderr, "kx %d\n", kx);*/
             /*fprintf("stderr, ky %d\n", ky);*/
+            /* BUG FIX with abs() since produced indices where also negative */
             temp += (1 - (((node->spins[abs((i + ny + ky)) % ny] >>
                             ((j + 32 + kx) % 32)) +
                            1) &
