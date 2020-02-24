@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xml:lang="en" version="-//W3C//DTD XHTML 1.1//EN" xmlns="http://www.w3.org/1999/xhtml"><head>
+
+
+  
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="delaunayrefinement_files/layout.css">
+    <link rel="stylesheet" type="text/css" href="delaunayrefinement_files/style.css">
+    <link rel="stylesheet" type="text/css" href="delaunayrefinement_files/boxes.css">
+
+    <title>The Lonestar Benchmark Suite -- Delaunay Mesh Refinement</title>
+    
+  </head><body>
+
+    <div> 
+      <div>
+
+        <div id="main">
+          <div id="topbar"> 
+            <element><a href="http://iss.ices.utexas.edu/">ISS Home</a></element>
+            <element><a href="http://iss.ices.utexas.edu/lonestar/index.html">&gt;&nbsp;Lonestar</a></element>
+            <element><a href="http://iss.ices.utexas.edu/lonestar/description.html">&gt;&nbsp;description</a></element>
+            <element><a href="http://iss.ices.utexas.edu/lonestar/delaunayrefinement.html">&gt;&nbsp;Delaunay&nbsp;refinement</a></element>
+          </div>
+	  <div id="linkbar">
+	    <element><a href="http://iss.ices.utexas.edu/lonestar/index.html">Main</a></element>
+	    <element><a href="http://iss.ices.utexas.edu/lonestar/description.html">Description</a></element> 
+	    <element><a href="http://iss.ices.utexas.edu/lonestar/download.html">Download</a></element>
+	    <element><a href="http://iss.ices.utexas.edu/lonestar/contributors.html">Contributors</a></element>
+	  </div>
+          <br><br><br>
+	        <!-- <img src="star.png"><h1>The Lonestar Benchmark Suite</h1> -->                  
+                <div id="header">
+                  <h2>Delaunay Mesh Refinement</h2>
+                </div>
+                <br>
+                </div>
+                
+                <div id="content">
+                  <div class="section">
+                    <h1>Application Description</h1>
+                    <p>
+                      This benchmark is an implementation of the algorithm
+                      described by Kulkarni et al. [1].  It is the algorithm
+                      discussed in Section 1.  The application produces a
+                      guaranteed quality Delaunay mesh, which is a Delaunay
+                      triangulation with the additional constraint that no angle
+                      in the mesh be less than 30 degrees.  The benchmark takes
+                      as input an unrefined Delaunay triangulation and produces
+                      a new mesh that satisfies the quality constraint.  The
+                      data parallelism in this algorithm arises from the
+                      worklist of badly shaped triangles that must be "fixed."
+                    </p>
+                    <span class="reference">
+                      [1] Milind Kulkarni, Keshav Pingali, Bruce Walter, Ganesh
+                      Ramanarayanan, Kavita Bala and L. Paul Chew. Optimistic
+                      Parallelism Requires Abstractions. In Proceedings of the
+                      ACM Conference on Programming Languages Design and
+                      Implementation (PLDI), 211 - 222. June 2007.
+                    </span>
+                  </div>
+
+                  <div class="section">
+                    <div class="fig" style="border: 0px none ; width: 200px; float: right;">
+                      <img src="delaunayrefinement_files/mesh.png"><br>
+                      <span class="caption">Figure 1: Delaunay mesh refinement example</span>
+                    </div>
+                    <h1>Algorithm</h1>
+                    <p>
+                      A 2D Delaunay mesh is a triangulation of a set of points
+                      with the following property: the circumcircle of any
+                      triangle in the mesh must contain no other point from the
+                      mesh.  A <em>refined Delaunay mesh</em> is a Delaunay mesh
+                      with the additional constraint that no triangle have an
+                      angle less than 30 degrees.  The algorithm takes an input
+                      Delaunay mesh (e.g., the top mesh in Figure 1), which may
+                      contain triangles that do not meet the quality constraints
+                      (called <em> bad triangles</em>, marked in red in Figure
+                      1), and produces a refined mesh by iteratively
+                      re-triangulating the affected portions of the mesh.
+                    </p>
+                    <p>
+                      The algorithm is initialized with a worklist of all the
+                      bad triangles in the input mesh.  In each step, the
+                      refinement procedure (i) picks a bad triangle from the
+                      worklist, (ii) collects the affected triangles in the
+                      neighborhood of that bad triangle (called
+                      the <em>cavity</em>, shown in blue in Figure 1), and (iii)
+                      re-triangulates the cavity (creating the new green
+                      triangles in Figure 1).  If this re-triangulation creates
+                      new badly-shaped triangles in the cavity, they are
+                      processed as well until all bad triangles have been
+                      eliminated from the mesh.  The order in which the bad
+                      triangles are processed is irrelevant, all orders lead to
+                      a valid refined mesh.
+                    </p>
+
+                    <div class="fig" style="float: right; margin-left: 30px; margin-top: 30px; width: 300px;">
+                      <div class="pseudocode">
+                        <pre> 1: Mesh m = /* read input mesh */ 
+ 2: Worklist wl = new Worklist(m.getBad());
+ 3: foreach Triangle t in wl { 
+ 4:   Cavity c = new Cavity(t);
+ 5:   c.expand();
+ 6:   c.retriangulate();
+ 7:   m.updateMesh(c); 
+ 8:   wl.add(c.getBad()); 
+ 9: } </pre>
+                      </div>
+                      <span class="caption">
+                        Figure 2: Pseudocode for Delaunay mesh refinement
+                      </span>
+                    </div>
+
+                    <p> In more detail, the algorithm proceeds as follows
+                      (pseudocode is provided in Figure 2).  After reading in
+                      the input mesh (line 1), a worklist is initialized with
+                      the bad triangles in the mesh (line 2).  For each bad
+                      triangle, a cavity is created (line 4) and expanded to
+                      encompass the required neighboring triangles (line 5).
+                      The algorithm then determines the new triangles that
+                      should be created (line 6) and updates the original mesh
+                      by removing the old triangles and adding the new triangles
+                      (line 7).  The order of processing is irrelevant in this
+                      algorithm, so the
+                      <i>foreach</i> in line 3 iterates over an unordered set.
+                    </p>
+                  </div>
+
+                  <div class="section">
+                    <h1>Data Structures</h1>
+                    There are two key data structures used in Delaunay mesh refinement:
+                    <ul>
+                      <li><h3>Unordered Set</h3>: The worklist used to hold the
+                        bad triangles is represented as an unordered set.  The
+                        triangles can be processed in any order.</li>
+                      <li><h3>Graph</h3>: The mesh is represented as a graph.
+                        Triangles in the mesh are represented as nodes in the
+                        graph, and triangle adjacency is represented by edges
+                        between nodes.</li>
+                    </ul></div>
+
+                    <div class="section">
+                      <h1>Parallelism</h1>
+                      <p>
+                        The active nodes in Delaunay mesh refinement are the bad
+                        triangles. The algorithm can be parallelized by
+                        processing multiple bad triangles simultaneously.
+                        Because the neighborhood of a bad triangle is its
+                        cavity, this may result in significant parallelism if
+                        the triangles are far enough apart so that their
+                        cavities do not overlap (as in Figure 1, where all of
+                        the bad triangles can be processed in
+                        parallel). Conflicts occur when cavities overlap.  This
+                        is manifested in the algorithm by multiple update
+                        operations (line 7) attempting to manipulate the same
+                        triangles.
+                      </p>
+                      <p>
+                        Figures 3 and 4 show the available parallelism and the
+                        parallelism intensity of Delaunay mesh refinement,
+                        respectively, for a random input consisting of 549,998
+                        triangles of which 261,100 are initially bad. Delaunay
+                        mesh refinement is a graph refinement code because each
+                        retriangulated cavity replaces an existing subgraph with
+                        a new subgraph that contains more nodes. Thus, as the
+                        graph becomes bigger, the likelihood of two cavities
+                        overlapping decreases and the available parallelism and
+                        the parallelism intensity increase accordingly until the
+                        algorithm runs out of work.  Interestingly, the
+                        parallelism intensity stops increasing relatively
+                        quickly. This is because the bad triangles are only
+                        initially uniformly distributed through the graph but
+                        gradually start to cluster as the majority of the
+                        remaining work is from bad triangles created by previous
+                        retriangulations. This new work, rather than being
+                        uniformly distributed, clusters at the site of
+                        retriangulations.
+                      </p>
+                    </div>
+
+                    <div class="fig" style="border: 0px none ; width: 500px;">
+                      <img src="delaunayrefinement_files/dr.png"><br>
+                          <span class="caption">Figure 3: Available parallelism in
+                          Delaunay mesh refinement</span>
+                        </div>
+                        <div class="fig" style="border: 0px none ; width: 500px;">
+                          <img src="delaunayrefinement_files/dr_002.png"><br>
+                              <span class="caption">Figure 4: Parallelism
+                              intensity of Delaunay mesh refinement</span>
+                            </div>
+
+                          </div>
+
+                        <div id="footer">
+                          This project is a joint effort between the University
+                            of Texas at Austin and IBM Corporation<br> (C) 2007,
+                            2008, 2009 The University of Texas at Austin
+                          </div>
+                        </div>
+                      </div>
+
+                    </body></html>
