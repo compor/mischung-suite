@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define HAS_UNISTD_H
+/*#define HAVE_GETOPT_H*/
 
-#ifdef HAS_UNISTD_H
-#include <unistd.h>
-#endif /* HAS_UNISTD_H */
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif /* HAVE_GETOPT_H */
 
 #define N 2010
 #define ny 10
@@ -60,7 +60,7 @@ int potential(struct node *node) {
 void print_nodes(long n, struct node *node, int *energy);
 
 void handle_args(int argc, char *argv[]) {
-#ifdef HAS_UNISTD_H
+#ifdef HAVE_GETOPT_H
   int opt;
   long nodes_num_tmp = 0;
 
@@ -119,7 +119,7 @@ void handle_args(int argc, char *argv[]) {
   if (argc > 5) {
     debug_mode = atoi(argv[5]);
   }
-#endif /* HAS_UNISTD_H */
+#endif /* HAVE_GETOPT_H */
 }
 
 int main(int argc, char *argv[]) {
@@ -133,12 +133,12 @@ int main(int argc, char *argv[]) {
 
   handle_args(argc, argv);
 
-  nodes = (struct node *) malloc(nodes_num * sizeof(struct node));
+  nodes = (struct node *)malloc(nodes_num * sizeof(struct node));
   if (!nodes) {
     return -1;
   }
 
-  energy = (int *) malloc(nodes_num * sizeof(int));
+  energy = (int *)malloc(nodes_num * sizeof(int));
   if (!energy) {
     free(nodes);
     return -1;
