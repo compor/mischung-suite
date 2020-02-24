@@ -133,12 +133,12 @@ int main(int argc, char *argv[]) {
 
   handle_args(argc, argv);
 
-  nodes = malloc(nodes_num * sizeof(struct node));
+  nodes = (struct node *) malloc(nodes_num * sizeof(struct node));
   if (!nodes) {
     return -1;
   }
 
-  energy = malloc(nodes_num * sizeof(int));
+  energy = (int *) malloc(nodes_num * sizeof(int));
   if (!energy) {
     free(nodes);
     return -1;
